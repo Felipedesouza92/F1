@@ -1,9 +1,6 @@
 """Testes unitários para os modelos Pydantic de f1/domain/models.py."""
 
-import pytest
-from pydantic import ValidationError
-
-from f1.domain.models import Driver, Lap, Meeting, Session, Stint
+from f1.domain.models import Driver, Lap, Meeting, Stint
 
 
 def test_meeting_model():
@@ -52,4 +49,3 @@ def test_stint_model_validation():
         lap_end=18,
     )
     assert s.compound == "SOFT"
-

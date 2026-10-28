@@ -11,8 +11,12 @@ def test_summarize_weather():
     assert w_empty is None
 
     w_list = [
-        Weather(air_temperature=25.0, track_temperature=35.0, humidity=50.0, rainfall=0),
-        Weather(air_temperature=27.0, track_temperature=40.0, humidity=55.0, rainfall=1),
+        Weather(
+            air_temperature=25.0, track_temperature=35.0, humidity=50.0, rainfall=0
+        ),
+        Weather(
+            air_temperature=27.0, track_temperature=40.0, humidity=55.0, rainfall=1
+        ),
     ]
     summary = summarize_weather(w_list)
     assert summary is not None
@@ -27,7 +31,11 @@ def test_stints_and_pits():
     drivers = [Driver(driver_number=44, full_name="Lewis Hamilton")]
     index = build_driver_index(drivers)
 
-    stints = [Stint(driver_number=44, stint_number=1, compound="medium", lap_start=1, lap_end=20)]
+    stints = [
+        Stint(
+            driver_number=44, stint_number=1, compound="medium", lap_start=1, lap_end=20
+        )
+    ]
     timeline = build_stint_timeline(stints, index)
     assert len(timeline) == 1
     assert timeline[0].compound == "MEDIUM"
@@ -36,4 +44,3 @@ def test_stints_and_pits():
     res = pit_summary(pits, index)
     assert len(res) == 1
     assert res[0].pit_duration == 22.4
-

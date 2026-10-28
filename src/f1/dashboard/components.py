@@ -5,7 +5,6 @@ from __future__ import annotations
 import streamlit as st
 
 from f1.domain.models import ClassificationEntry, WeatherSummary
-from f1.processing.formatting import format_lap_time
 
 
 def render_weather_metrics(weather: WeatherSummary | None) -> None:
@@ -55,11 +54,10 @@ def render_podium(classification: list[ClassificationEntry]) -> None:
                                 padding: 15px;
                                 border-radius: 8px;
                                 margin-bottom: 15px;">
-                        <span style="font-size: 1.1em; color: #ffb703; font-weight: bold;">{medals.get(pos, '')}</span>
+                        <span style="font-size: 1.1em; color: #ffb703; font-weight: bold;">{medals.get(pos, "")}</span>
                         <h3 style="margin: 5px 0; color: #fafafa;">{driver.driver_name}</h3>
                         <p style="margin: 0; color: #aaaaaa;">{driver.team_name} | #{driver.driver_number}</p>
                     </div>
                     """,
                     unsafe_allow_html=True,
                 )
-

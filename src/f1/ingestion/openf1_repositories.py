@@ -42,7 +42,9 @@ def _parse_items(raw_list: list[dict[str, Any]], model_cls: Any) -> list[Any]:
             ignored += 1
     if ignored > 0:
         logger.warning(
-            "Ignorados %d itens inválidos ao parsear para %s", ignored, model_cls.__name__
+            "Ignorados %d itens inválidos ao parsear para %s",
+            ignored,
+            model_cls.__name__,
         )
     return valid
 
@@ -54,6 +56,7 @@ class OpenF1MeetingRepository(MeetingRepository):
         self._client = client
 
     def list(self, year: int) -> list[Meeting]:
+        """Lista meetings de um ano."""
         raw = self._client.get("meetings", {"year": year})
         return _parse_items(raw, Meeting)
 
@@ -65,6 +68,7 @@ class OpenF1SessionRepository(SessionRepository):
         self._client = client
 
     def list(self, meeting_key: int) -> list[Session]:
+        """Lista sessões de um meeting."""
         raw = self._client.get("sessions", {"meeting_key": meeting_key})
         return _parse_items(raw, Session)
 
@@ -76,6 +80,7 @@ class OpenF1DriverRepository(DriverRepository):
         self._client = client
 
     def list(self, session_key: int) -> list[Driver]:
+        """Lista pilotos de uma sessão."""
         raw = self._client.get("drivers", {"session_key": session_key})
         return _parse_items(raw, Driver)
 
@@ -87,6 +92,7 @@ class OpenF1LapRepository(LapRepository):
         self._client = client
 
     def list(self, session_key: int, driver_number: int | None = None) -> list[Lap]:
+        """Lista voltas de uma sessão."""
         params: dict[str, Any] = {"session_key": session_key}
         if driver_number is not None:
             params["driver_number"] = driver_number
@@ -101,6 +107,7 @@ class OpenF1StintRepository(StintRepository):
         self._client = client
 
     def list(self, session_key: int) -> list[Stint]:
+        """Lista stints de uma sessão."""
         raw = self._client.get("stints", {"session_key": session_key})
         return _parse_items(raw, Stint)
 
@@ -112,6 +119,7 @@ class OpenF1PitRepository(PitRepository):
         self._client = client
 
     def list(self, session_key: int) -> list[PitStop]:
+        """Lista pit stops de uma sessão."""
         raw = self._client.get("pit", {"session_key": session_key})
         return _parse_items(raw, PitStop)
 
@@ -123,6 +131,7 @@ class OpenF1SessionResultRepository(SessionResultRepository):
         self._client = client
 
     def list(self, session_key: int) -> list[SessionResult]:
+        """Lista resultados de uma sessão."""
         raw = self._client.get("position", {"session_key": session_key})
         return _parse_items(raw, SessionResult)
 
@@ -134,6 +143,6 @@ class OpenF1WeatherRepository(WeatherRepository):
         self._client = client
 
     def list(self, session_key: int) -> list[Weather]:
+        """Lista medições meteorológicas de uma sessão."""
         raw = self._client.get("weather", {"session_key": session_key})
         return _parse_items(raw, Weather)
-

@@ -45,9 +45,7 @@ class LapRepository(ABC):
     """Contrato para buscar voltas de uma sessão."""
 
     @abstractmethod
-    def list(
-        self, session_key: int, driver_number: int | None = None
-    ) -> list[Lap]:
+    def list(self, session_key: int, driver_number: int | None = None) -> list[Lap]:
         """Lista voltas de uma sessão, opcionalmente filtradas por piloto."""
 
 
@@ -81,4 +79,3 @@ class WeatherRepository(ABC):
     @abstractmethod
     def list(self, session_key: int) -> list[Weather]:
         """Lista dados meteorológicos de uma sessão."""
-

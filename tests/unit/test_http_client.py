@@ -46,4 +46,3 @@ def test_http_client_4xx_no_retry():
     client = HttpClient(base_url="https://api.test", transport=transport)
     with pytest.raises(OpenF1ApiError):
         client.get("not-found")
-

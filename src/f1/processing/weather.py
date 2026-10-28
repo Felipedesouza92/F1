@@ -15,8 +15,12 @@ def summarize_weather(weather_list: list[Weather]) -> WeatherSummary | None:
     if not weather_list:
         return None
 
-    air_temps = [w.air_temperature for w in weather_list if w.air_temperature is not None]
-    track_temps = [w.track_temperature for w in weather_list if w.track_temperature is not None]
+    air_temps = [
+        w.air_temperature for w in weather_list if w.air_temperature is not None
+    ]
+    track_temps = [
+        w.track_temperature for w in weather_list if w.track_temperature is not None
+    ]
     humidities = [w.humidity for w in weather_list if w.humidity is not None]
     rain = any(bool(w.rainfall and w.rainfall > 0) for w in weather_list)
 
@@ -27,10 +31,11 @@ def summarize_weather(weather_list: list[Weather]) -> WeatherSummary | None:
         air_temp_max=max(air_temps) if air_temps else None,
         track_temp_min=min(track_temps) if track_temps else None,
         track_temp_max=max(track_temps) if track_temps else None,
-        humidity_avg=round(sum(humidities) / len(humidities), 1) if humidities else None,
+        humidity_avg=round(sum(humidities) / len(humidities), 1)
+        if humidities
+        else None,
         rainfall=rain,
         air_temp_last=last.air_temperature,
         track_temp_last=last.track_temperature,
         humidity_last=last.humidity,
     )
-

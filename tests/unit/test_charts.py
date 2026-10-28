@@ -48,4 +48,3 @@ def test_stint_timeline():
     fig = stint_timeline(stints)
     assert isinstance(fig, go.Figure)
     assert len(fig.data) >= 1
-

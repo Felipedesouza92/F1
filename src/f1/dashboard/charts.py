@@ -7,12 +7,12 @@ import plotly.graph_objects as go
 from f1.domain.models import FastestLapEntry, StintBar
 from f1.processing.formatting import COMPOUND_COLORS, format_lap_time
 
-DARK_LAYOUT = dict(
-    paper_bgcolor="#1a1a1a",
-    plot_bgcolor="#222222",
-    font=dict(color="#fafafa", family="sans-serif"),
-    margin=dict(l=40, r=40, t=50, b=40),
-)
+DARK_LAYOUT = {
+    "paper_bgcolor": "#1a1a1a",
+    "plot_bgcolor": "#222222",
+    "font": {"color": "#fafafa", "family": "sans-serif"},
+    "margin": {"l": 40, "r": 40, "t": 50, "b": 40},
+}
 
 
 def fastest_laps_bar(entries: list[FastestLapEntry]) -> go.Figure:
@@ -27,7 +27,7 @@ def fastest_laps_bar(entries: list[FastestLapEntry]) -> go.Figure:
             x=0.5,
             y=0.5,
             showarrow=False,
-            font=dict(color="#888888", size=16),
+            font={"color": "#888888", "size": 16},
         )
         fig.update_layout(**DARK_LAYOUT, title="Voltas Mais Rápidas")
         return fig
@@ -43,7 +43,7 @@ def fastest_laps_bar(entries: list[FastestLapEntry]) -> go.Figure:
             y=y_labels,
             x=x_values,
             orientation="h",
-            marker=dict(color=colors),
+            marker={"color": colors},
             text=text_labels,
             textposition="auto",
             hovertemplate="<b>%{y}</b><br>Tempo: %{text}<extra></extra>",
@@ -56,13 +56,22 @@ def fastest_laps_bar(entries: list[FastestLapEntry]) -> go.Figure:
     fig.update_layout(
         **DARK_LAYOUT,
         title="Top 10 Voltas Mais Rápidas",
-        xaxis=dict(title="Duração (s)", range=[min_x, max_x], showgrid=True, gridcolor="#333333"),
-        yaxis=dict(showgrid=False),
+        xaxis={
+            "title": "Duração (s)",
+            "range": [min_x, max_x],
+            "showgrid": True,
+            "gridcolor": "#333333",
+        },
+        yaxis={"showgrid": False},
     )
     return fig
 
 
-def pace_lines(driver_series: dict[int, list[tuple[int, float]]], driver_names: dict[int, str], driver_colors: dict[int, str]) -> go.Figure:
+def pace_lines(
+    driver_series: dict[int, list[tuple[int, float]]],
+    driver_names: dict[int, str],
+    driver_colors: dict[int, str],
+) -> go.Figure:
     """Gera gráfico de linha comparativo de ritmo volta a volta."""
     fig = go.Figure()
 
@@ -82,8 +91,8 @@ def pace_lines(driver_series: dict[int, list[tuple[int, float]]], driver_names: 
                 y=times,
                 mode="lines+markers",
                 name=name,
-                line=dict(color=color, width=2),
-                marker=dict(size=4),
+                line={"color": color, "width": 2},
+                marker={"size": 4},
                 hovertemplate=f"<b>{name}</b><br>Volta %{{x}}<br>Tempo: %{{y:.3f}}s<extra></extra>",
             )
         )
@@ -96,15 +105,21 @@ def pace_lines(driver_series: dict[int, list[tuple[int, float]]], driver_names: 
             x=0.5,
             y=0.5,
             showarrow=False,
-            font=dict(color="#888888", size=16),
+            font={"color": "#888888", "size": 16},
         )
 
     fig.update_layout(
         **DARK_LAYOUT,
         title="Ritmo Volta a Volta (sem voltas de pit/outliers)",
-        xaxis=dict(title="Número da Volta", showgrid=True, gridcolor="#333333"),
-        yaxis=dict(title="Tempo de Volta (s)", showgrid=True, gridcolor="#333333"),
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+        xaxis={"title": "Número da Volta", "showgrid": True, "gridcolor": "#333333"},
+        yaxis={"title": "Tempo de Volta (s)", "showgrid": True, "gridcolor": "#333333"},
+        legend={
+            "orientation": "h",
+            "yanchor": "bottom",
+            "y": 1.02,
+            "xanchor": "right",
+            "x": 1,
+        },
     )
     return fig
 
@@ -121,12 +136,12 @@ def stint_timeline(stints: list[StintBar]) -> go.Figure:
             x=0.5,
             y=0.5,
             showarrow=False,
-            font=dict(color="#888888", size=16),
+            font={"color": "#888888", "size": 16},
         )
         fig.update_layout(**DARK_LAYOUT, title="Estratégia de Pneus")
         return fig
 
-    drivers_seen = sorted(list({s.driver_name for s in stints}), reverse=True)
+    drivers_seen = sorted({s.driver_name for s in stints}, reverse=True)
 
     for compound, color in COMPOUND_COLORS.items():
         matching = [s for s in stints if s.compound == compound]
@@ -140,11 +155,13 @@ def stint_timeline(stints: list[StintBar]) -> go.Figure:
                 x=[(s.lap_end - s.lap_start + 1) for s in matching],
                 base=[s.lap_start for s in matching],
                 orientation="h",
-                marker=dict(color=color, line=dict(color="#1a1a1a", width=1)),
+                marker={"color": color, "line": {"color": "#1a1a1a", "width": 1}},
                 text=[f"{compound} ({s.lap_start}-{s.lap_end})" for s in matching],
                 textposition="inside",
                 insidetextanchor="middle",
-                hovertemplate="<b>%{y}</b><br>Composto: " + compound + "<br>Voltas: %{base} a %{text}<extra></extra>",
+                hovertemplate="<b>%{y}</b><br>Composto: "
+                + compound
+                + "<br>Voltas: %{base} a %{text}<extra></extra>",
             )
         )
 
@@ -152,9 +169,14 @@ def stint_timeline(stints: list[StintBar]) -> go.Figure:
         **DARK_LAYOUT,
         title="Estratégia de Pneus por Piloto",
         barmode="overlay",
-        xaxis=dict(title="Volta", showgrid=True, gridcolor="#333333"),
-        yaxis=dict(categoryorder="array", categoryarray=drivers_seen),
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+        xaxis={"title": "Volta", "showgrid": True, "gridcolor": "#333333"},
+        yaxis={"categoryorder": "array", "categoryarray": drivers_seen},
+        legend={
+            "orientation": "h",
+            "yanchor": "bottom",
+            "y": 1.02,
+            "xanchor": "right",
+            "x": 1,
+        },
     )
     return fig
-

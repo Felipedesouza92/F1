@@ -19,4 +19,3 @@ def configurar_logging(nivel: str = "INFO") -> None:
     raiz = logging.getLogger()
     raiz.handlers[:] = [handler]
     raiz.setLevel(nivel)
-

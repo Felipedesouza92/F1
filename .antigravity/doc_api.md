@@ -1,427 +1,362 @@
 # OpenF1 API — Documentação Resumida
 
-> **Base URL:** `https://api.openf1.org/v1`
-> **Autenticação:** Gratuita, sem API key (dados de 2023 em diante)
-> **Formato padrão:** JSON (adicione `?csv=true` para CSV)
+> Fonte oficial: https://openf1.org/docs
 
 ---
 
-## Parâmetros Globais
+## Visão Geral
 
-| Parâmetro | Descrição |
-|---|---|
-| `session_key` | Identifica a sessão (ex: `9161`). Use `latest` para a mais recente |
-| `meeting_key` | Identifica o fim de semana de corrida |
-| `driver_number` | Número do piloto (ex: `44` = Hamilton) |
-| `csv=true` | Retorna dados em CSV em vez de JSON |
+A **OpenF1** é uma API aberta e não-oficial que fornece dados de telemetria e temporização da Fórmula 1 em formato **JSON** ou **CSV**.
 
-### Operadores de Filtro
+- **Dados históricos** (a partir de 2023): gratuitos, sem autenticação
+- **Dados em tempo real**: requerem assinatura paga
+- **URL base:** `https://api.openf1.org/v1/`
 
-```
-=    Igual          ?driver_number=1
->=   Maior ou igual ?speed>=300
-<=   Menor ou igual ?lap_number<=20
->    Maior que      ?speed>315
-<    Menor que      ?lap_number<5
-```
+---
 
-Filtros por data usam ISO 8601: `?date>=2024-03-02T13:00:00`
+## Autenticação
+
+Nenhuma autenticação necessária para dados históricos. Para acesso em tempo real, é necessária uma assinatura — consulte o site oficial.
+
+---
+
+## Filtragem e Dicas de Consulta
+
+Todos os endpoints aceitam parâmetros de filtragem via query string.
+
+| Operador | Exemplo |
+|----------|---------|
+| Igual | `driver_number=44` |
+| Maior ou igual | `speed>=300` |
+| Menor ou igual | `lap_duration<=90` |
+| Maior que | `rpm>12000` |
+| Menor que | `throttle<50` |
+
+**Dicas úteis:**
+- Use `session_key=latest` ou `meeting_key=latest` para obter dados da sessão/etapa mais recente
+- Adicione `csv=true` a qualquer query para exportar em formato CSV
+- Datas aceitam ISO 8601, texto ou formato relativo
 
 ---
 
 ## Endpoints
 
-### 1. Meetings — `/meetings`
+### 1. Car Data — Telemetria do Carro
+**URL:** `https://api.openf1.org/v1/car_data`
 
-Informações sobre fins de semana de corrida (GPs).
+Dados de telemetria do carro a ~3,7 Hz.
 
-**Campos:** `meeting_key`, `meeting_name`, `location`, `country`, `circuit_short_name`, `year`
+| Campo | Descrição |
+|-------|-----------|
+| `brake` | Freio: 100 (pressionado) ou 0 (solto) |
+| `date` | Timestamp UTC (ISO 8601) |
+| `driver_number` | Número do piloto |
+| `drs` | Status do DRS (ver tabela abaixo) |
+| `n_gear` | Marcha atual (0–8) |
+| `rpm` | Rotação do motor |
+| `speed` | Velocidade em km/h |
+| `throttle` | Porcentagem de acelerador (0–99) |
 
-```bash
-curl "https://api.openf1.org/v1/meetings?year=2024"
+**Exemplo:**
+```
+GET /v1/car_data?driver_number=55&session_key=9159&speed>=315
 ```
 
 ---
 
-### 2. Sessions — `/sessions`
+### 2. Drivers — Informações dos Pilotos
+**URL:** `https://api.openf1.org/v1/drivers`
 
-Sessões dentro de um meeting (Treino, Classificação, Sprint, Corrida).
+Dados dos pilotos por sessão, populados no início de cada sessão.
 
-**Campos:** `session_key`, `session_name`, `session_type`, `date_start`, `date_end`, `meeting_key`, `year`
+| Campo | Descrição |
+|-------|-----------|
+| `broadcast_name` | Nome de transmissão |
+| `driver_number` | Número do piloto |
+| `full_name` | Nome completo |
+| `name_acronym` | Abreviação (ex: VER, HAM) |
+| `team_name` | Nome da equipe |
+| `team_colour` | Cor hexadecimal da equipe |
+| `headshot_url` | URL da foto do piloto |
 
-```bash
-curl "https://api.openf1.org/v1/sessions?meeting_key=1229&session_name=Race"
+**Exemplo:**
+```
+GET /v1/drivers?driver_number=1&session_key=9158
 ```
 
 ---
 
-### 3. Drivers — `/drivers`
+### 3. Meetings — Etapas/Fins de Semana
+**URL:** `https://api.openf1.org/v1/meetings`
 
-Pilotos participantes de uma sessão.
+Metadados sobre Grandes Prêmios ou testes. Atualizado diariamente à meia-noite UTC.
 
-**Campos:** `driver_number`, `full_name`, `name_acronym`, `team_name`, `team_colour`, `session_key`
+| Campo | Descrição |
+|-------|-----------|
+| `meeting_key` | Identificador único da etapa |
+| `meeting_name` | Nome do GP |
+| `country_name` | País |
+| `circuit_short_name` | Nome curto do circuito |
+| `location` | Cidade/local |
+| `date_start` | Data de início |
+| `year` | Temporada |
 
-```bash
-curl "https://api.openf1.org/v1/drivers?session_key=latest"
+**Exemplo:**
+```
+GET /v1/meetings?year=2026&country_name=Singapore
 ```
 
 ---
 
-### 4. Laps — `/laps`
+### 4. Sessions — Sessões
+**URL:** `https://api.openf1.org/v1/sessions`
 
-Dados volta a volta: tempos, setores e velocidades.
+Períodos distintos de atividade na pista: treinos, classificação, corrida, sprint.
 
-**Campos:** `driver_number`, `lap_number`, `lap_duration`, `duration_sector_1`, `duration_sector_2`, `duration_sector_3`, `st_speed` (speed trap), `is_pit_out_lap`, `session_key`
+| Campo | Descrição |
+|-------|-----------|
+| `session_key` | Identificador único da sessão |
+| `session_name` | Nome (Practice 1, Qualifying, Race...) |
+| `session_type` | Tipo (Practice, Qualifying, Race) |
+| `date_start` / `date_end` | Período da sessão |
+| `country_name` | País |
+| `year` | Temporada |
 
-```bash
-curl "https://api.openf1.org/v1/laps?session_key=9161&driver_number=63&lap_number=8"
+**Exemplo:**
+```
+GET /v1/sessions?country_name=Belgium&session_name=Sprint%20Qualifying&year=2023
 ```
 
 ---
 
-### 5. Car Data — `/car_data`
+### 5. Laps — Voltas
+**URL:** `https://api.openf1.org/v1/laps`
 
-Telemetria de alta frequência (~3.7 Hz): velocidade, RPM, marcha, acelerador, freio, DRS.
+Detalhes volta a volta: tempos de setor, velocidades e mini-setores.
 
-**Campos:** `date`, `driver_number`, `speed`, `throttle`, `brake`, `n_gear`, `rpm`, `drs`, `session_key`
+| Campo | Descrição |
+|-------|-----------|
+| `lap_number` | Número da volta |
+| `lap_duration` | Tempo total da volta (s) |
+| `duration_sector_1/2/3` | Tempo de cada setor |
+| `i1_speed` / `i2_speed` | Velocidade no ponto de medição |
+| `st_speed` | Velocidade na linha de chegada |
+| `segments_sector_1/2/3` | Mini-setores (array de cores) |
+| `is_pit_out_lap` | Indica saída dos pits |
 
-```bash
-curl "https://api.openf1.org/v1/car_data?session_key=9159&driver_number=55&speed>=315"
+**Exemplo:**
 ```
-
-> ⚠️ **Volume alto de dados** — sempre filtre por `driver_number` e intervalo de `date`.
-
----
-
-### 6. Location — `/location`
-
-Coordenadas cartesianas (X, Y, Z) dos carros na pista (~3.7 Hz).
-
-**Campos:** `date`, `driver_number`, `x`, `y`, `z`, `session_key`
-
-```bash
-curl "https://api.openf1.org/v1/location?session_key=9159&driver_number=1"
+GET /v1/laps?session_key=9161&driver_number=63&lap_number=8
 ```
 
 ---
 
-### 7. Intervals — `/intervals`
+### 6. Location — Localização no Circuito
+**URL:** `https://api.openf1.org/v1/location`
 
-Gap entre pilotos durante a sessão (intervalo para o líder e para o carro à frente).
+Posição aproximada do carro no circuito em coordenadas 3D a ~3,7 Hz.
 
-**Campos:** `date`, `driver_number`, `gap_to_leader`, `interval`, `session_key`
-
-```bash
-curl "https://api.openf1.org/v1/intervals?session_key=9159&driver_number=1"
-```
-
----
-
-### 8. Position — `/position`
-
-Posição dos pilotos na classificação ao longo da sessão.
-
-**Campos:** `date`, `driver_number`, `position`, `session_key`
-
-```bash
-curl "https://api.openf1.org/v1/position?session_key=9159&driver_number=1"
-```
+| Campo | Descrição |
+|-------|-----------|
+| `x` / `y` / `z` | Coordenadas no circuito |
+| `date` | Timestamp UTC |
+| `driver_number` | Piloto |
 
 ---
 
-### 9. Stints — `/stints`
+### 7. Position — Posição na Corrida
+**URL:** `https://api.openf1.org/v1/position`
 
-Stints de pneus: composto usado, volta de início/fim e idade do pneu.
+Mudanças de posição dos pilotos ao longo da sessão.
 
-**Campos:** `session_key`, `driver_number`, `stint_number`, `compound` (`SOFT`, `MEDIUM`, `HARD`, `INTERMEDIATE`, `WET`), `lap_start`, `lap_end`, `tyre_age_at_start`
-
-```bash
-curl "https://api.openf1.org/v1/stints?session_key=9159&driver_number=44"
-```
-
----
-
-### 10. Pit — `/pit`
-
-Eventos de pit stop: duração e volta.
-
-**Campos:** `session_key`, `driver_number`, `pit_duration`, `lap_number`, `date`
-
-```bash
-curl "https://api.openf1.org/v1/pit?session_key=9159&lap_number=15"
-```
+| Campo | Descrição |
+|-------|-----------|
+| `position` | Posição atual |
+| `date` | Timestamp da mudança |
+| `driver_number` | Piloto |
 
 ---
 
-### 11. Weather — `/weather`
+### 8. Intervals — Intervalos
+**URL:** `https://api.openf1.org/v1/intervals`
 
-Condições meteorológicas no circuito (atualizado ~1x por minuto).
+Gap entre pilotos e para o líder, atualizado a cada ~4 segundos.
 
-**Campos:** `session_key`, `date`, `air_temperature`, `track_temperature`, `humidity`, `pressure`, `wind_speed`, `wind_direction`, `rainfall` (0 ou 1)
+| Campo | Descrição |
+|-------|-----------|
+| `gap_to_leader` | Intervalo para o 1º colocado |
+| `interval` | Intervalo para o carro à frente |
+| `date` | Timestamp |
+| `driver_number` | Piloto |
 
-```bash
-curl "https://api.openf1.org/v1/weather?session_key=9159"
-```
-
----
-
-### 12. Race Control — `/race_control`
-
-Mensagens oficiais da direção de prova: bandeiras, safety car, penalidades.
-
-**Campos:** `session_key`, `date`, `category`, `message`, `flag`, `scope`, `lap_number`
-
-```bash
-curl "https://api.openf1.org/v1/race_control?session_key=9159&category=SafetyCar"
-```
+> Requer assinatura para dados em tempo real.
 
 ---
 
-### 13. Team Radio — `/team_radio`
+### 9. Pit — Paradas nos Pits
+**URL:** `https://api.openf1.org/v1/pit`
 
-Comunicações de rádio entre pilotos e boxes (links para áudio).
+Informações sobre cada parada no pit lane.
 
-**Campos:** `session_key`, `driver_number`, `date`, `recording_url`
-
-```bash
-curl "https://api.openf1.org/v1/team_radio?session_key=9159&driver_number=16"
-```
-
----
-
-## Exemplos Rápidos em Python
-
-### Buscar todos os pilotos da sessão mais recente
-
-```python
-import requests
-
-url = "https://api.openf1.org/v1/drivers?session_key=latest"
-drivers = requests.get(url).json()
-for d in drivers:
-    print(f"#{d['driver_number']} {d['full_name']} — {d['team_name']}")
-```
-
-### Telemetria de velocidade de um piloto
-
-```python
-import requests
-
-url = "https://api.openf1.org/v1/car_data"
-params = {
-    "session_key": 9161,
-    "driver_number": 1,
-    "speed>=": 300
-}
-data = requests.get(url, params=params).json()
-print(f"{len(data)} amostras com velocidade >= 300 km/h")
-```
-
-### Estratégia de pneus de um piloto
-
-```python
-import requests
-
-url = "https://api.openf1.org/v1/stints"
-params = {"session_key": 9161, "driver_number": 44}
-stints = requests.get(url, params=params).json()
-for s in stints:
-    print(f"Stint {s['stint_number']}: {s['compound']} (voltas {s['lap_start']}-{s['lap_end']})")
-```
+| Campo | Descrição |
+|-------|-----------|
+| `lap_number` | Volta em que entrou nos pits |
+| `pit_duration` | Duração total da parada (s) |
+| `driver_number` | Piloto |
 
 ---
 
-## Dicas de Uso
+### 10. Stints — Stints de Pneus
+**URL:** `https://api.openf1.org/v1/stints`
 
-- Use `session_key=latest` para acessar dados em tempo real durante sessões ao vivo
-- Combine filtros para reduzir o volume de dados (especialmente em `/car_data` e `/location`)
-- Dados disponíveis a partir da temporada **2023**
-- Rate limits aplicados no tier gratuito — evite requisições em loop sem intervalo
-- Todos os timestamps são em **UTC**
+Períodos de corrida por conjunto de pneus.
 
-
----
-
-### 3. Drivers — `/drivers`
-
-Pilotos participantes de uma sessão.
-
-**Campos:** `driver_number`, `full_name`, `name_acronym`, `team_name`, `team_colour`, `session_key`
-
-```bash
-curl "https://api.openf1.org/v1/drivers?session_key=latest"
-```
+| Campo | Descrição |
+|-------|-----------|
+| `compound` | Composto (SOFT, MEDIUM, HARD, etc.) |
+| `lap_start` / `lap_end` | Voltas do stint |
+| `tyre_age_at_start` | Idade do pneu no início do stint |
+| `driver_number` | Piloto |
 
 ---
 
-### 4. Laps — `/laps`
+### 11. Race Control — Controle de Corrida
+**URL:** `https://api.openf1.org/v1/race_control`
 
-Dados volta a volta: tempos, setores e velocidades.
+Mensagens da direção de prova: bandeiras, safety car, incidentes, status de sessão.
 
-**Campos:** `driver_number`, `lap_number`, `lap_duration`, `duration_sector_1`, `duration_sector_2`, `duration_sector_3`, `st_speed` (speed trap), `is_pit_out_lap`, `session_key`
-
-```bash
-curl "https://api.openf1.org/v1/laps?session_key=9161&driver_number=63&lap_number=8"
-```
-
----
-
-### 5. Car Data — `/car_data`
-
-Telemetria de alta frequência (~3.7 Hz): velocidade, RPM, marcha, acelerador, freio, DRS.
-
-**Campos:** `date`, `driver_number`, `speed`, `throttle`, `brake`, `n_gear`, `rpm`, `drs`, `session_key`
-
-```bash
-curl "https://api.openf1.org/v1/car_data?session_key=9159&driver_number=55&speed>=315"
-```
-
-> ⚠️ **Volume alto de dados** — sempre filtre por `driver_number` e intervalo de `date`.
+| Campo | Descrição |
+|-------|-----------|
+| `category` | Tipo (Flag, SafetyCar, SessionStatus, CarEvent) |
+| `flag` | Bandeira (GREEN, YELLOW, RED, CHEQUERED...) |
+| `message` | Mensagem da direção |
+| `driver_number` | Piloto envolvido (se aplicável) |
+| `date` | Timestamp |
 
 ---
 
-### 6. Location — `/location`
+### 12. Weather — Clima
+**URL:** `https://api.openf1.org/v1/weather`
 
-Coordenadas cartesianas (X, Y, Z) dos carros na pista (~3.7 Hz).
+Condições climáticas na pista, atualizadas a cada minuto.
 
-**Campos:** `date`, `driver_number`, `x`, `y`, `z`, `session_key`
-
-```bash
-curl "https://api.openf1.org/v1/location?session_key=9159&driver_number=1"
-```
-
----
-
-### 7. Intervals — `/intervals`
-
-Gap entre pilotos durante a sessão (intervalo para o líder e para o carro à frente).
-
-**Campos:** `date`, `driver_number`, `gap_to_leader`, `interval`, `session_key`
-
-```bash
-curl "https://api.openf1.org/v1/intervals?session_key=9159&driver_number=1"
-```
+| Campo | Descrição |
+|-------|-----------|
+| `air_temperature` | Temperatura do ar (°C) |
+| `track_temperature` | Temperatura da pista (°C) |
+| `humidity` | Umidade relativa (%) |
+| `wind_speed` | Velocidade do vento (m/s) |
+| `wind_direction` | Direção do vento (graus) |
+| `rainfall` | Indicador de chuva (0/1) |
+| `pressure` | Pressão atmosférica (mbar) |
 
 ---
 
-### 8. Position — `/position`
+### 13. Team Radio — Rádio de Equipe
+**URL:** `https://api.openf1.org/v1/team_radio`
 
-Posição dos pilotos na classificação ao longo da sessão.
+Trechos selecionados de comunicação entre pilotos e engenheiros.
 
-**Campos:** `date`, `driver_number`, `position`, `session_key`
-
-```bash
-curl "https://api.openf1.org/v1/position?session_key=9159&driver_number=1"
-```
-
----
-
-### 9. Stints — `/stints`
-
-Stints de pneus: composto usado, volta de início/fim e idade do pneu.
-
-**Campos:** `session_key`, `driver_number`, `stint_number`, `compound` (`SOFT`, `MEDIUM`, `HARD`, `INTERMEDIATE`, `WET`), `lap_start`, `lap_end`, `tyre_age_at_start`
-
-```bash
-curl "https://api.openf1.org/v1/stints?session_key=9159&driver_number=44"
-```
+| Campo | Descrição |
+|-------|-----------|
+| `recording_url` | URL do áudio |
+| `date` | Timestamp |
+| `driver_number` | Piloto |
 
 ---
 
-### 10. Pit — `/pit`
+### 14. Overtakes — Ultrapassagens
+**URL:** `https://api.openf1.org/v1/overtakes`
 
-Eventos de pit stop: duração e volta.
+Trocas de posição na pista e nos pits (somente corridas).
 
-**Campos:** `session_key`, `driver_number`, `pit_duration`, `lap_number`, `date`
-
-```bash
-curl "https://api.openf1.org/v1/pit?session_key=9159&lap_number=15"
-```
-
----
-
-### 11. Weather — `/weather`
-
-Condições meteorológicas no circuito (atualizado ~1x por minuto).
-
-**Campos:** `session_key`, `date`, `air_temperature`, `track_temperature`, `humidity`, `pressure`, `wind_speed`, `wind_direction`, `rainfall` (0 ou 1)
-
-```bash
-curl "https://api.openf1.org/v1/weather?session_key=9159"
-```
+| Campo | Descrição |
+|-------|-----------|
+| `driver_number_ahead` | Piloto que ficou à frente |
+| `driver_number_behind` | Piloto que ficou atrás |
+| `lap_number` | Volta da ultrapassagem |
 
 ---
 
-### 12. Race Control — `/race_control`
+### 15. Starting Grid — Grid de Largada
+**URL:** `https://api.openf1.org/v1/starting_grid`
 
-Mensagens oficiais da direção de prova: bandeiras, safety car, penalidades.
+Posições de largada com tempos da volta de classificação.
 
-**Campos:** `session_key`, `date`, `category`, `message`, `flag`, `scope`, `lap_number`
-
-```bash
-curl "https://api.openf1.org/v1/race_control?session_key=9159&category=SafetyCar"
-```
-
----
-
-### 13. Team Radio — `/team_radio`
-
-Comunicações de rádio entre pilotos e boxes (links para áudio).
-
-**Campos:** `session_key`, `driver_number`, `date`, `recording_url`
-
-```bash
-curl "https://api.openf1.org/v1/team_radio?session_key=9159&driver_number=16"
-```
+| Campo | Descrição |
+|-------|-----------|
+| `position` | Posição no grid |
+| `driver_number` | Piloto |
+| `lap_time` | Tempo da volta de classificação |
 
 ---
 
-## Exemplos Rápidos em Python
+### 16. Session Result — Resultado da Sessão
+**URL:** `https://api.openf1.org/v1/session_result`
 
-### Buscar todos os pilotos da sessão mais recente
+Classificação final por sessão.
 
-```python
-import requests
-
-url = "https://api.openf1.org/v1/drivers?session_key=latest"
-drivers = requests.get(url).json()
-for d in drivers:
-    print(f"#{d['driver_number']} {d['full_name']} — {d['team_name']}")
-```
-
-### Telemetria de velocidade de um piloto
-
-```python
-import requests
-
-url = "https://api.openf1.org/v1/car_data"
-params = {
-    "session_key": 9161,
-    "driver_number": 1,
-    "speed>=": 300
-}
-data = requests.get(url, params=params).json()
-print(f"{len(data)} amostras com velocidade >= 300 km/h")
-```
-
-### Estratégia de pneus de um piloto
-
-```python
-import requests
-
-url = "https://api.openf1.org/v1/stints"
-params = {"session_key": 9161, "driver_number": 44}
-stints = requests.get(url, params=params).json()
-for s in stints:
-    print(f"Stint {s['stint_number']}: {s['compound']} (voltas {s['lap_start']}-{s['lap_end']})")
-```
+| Campo | Descrição |
+|-------|-----------|
+| `position` | Posição final |
+| `driver_number` | Piloto |
+| `gap_to_leader` | Intervalo para o vencedor |
+| `laps_completed` | Voltas completadas |
+| `status` | DNF, DNS, DSQ ou vazio (finalizou) |
 
 ---
 
-## Dicas de Uso
+### 17. Championship Drivers — Campeonato de Pilotos *(beta)*
+**URL:** `https://api.openf1.org/v1/championship_drivers`
 
-- Use `session_key=latest` para acessar dados em tempo real durante sessões ao vivo
-- Combine filtros para reduzir o volume de dados (especialmente em `/car_data` e `/location`)
-- Dados disponíveis a partir da temporada **2023**
-- Rate limits aplicados no tier gratuito — evite requisições em loop sem intervalo
-- Todos os timestamps são em **UTC**
+Pontuação dos pilotos no campeonato. Disponível apenas para sessões de corrida.
+
+| Campo | Descrição |
+|-------|-----------|
+| `driver_number` | Piloto |
+| `points` | Pontos acumulados |
+| `position` | Posição no campeonato |
+
+---
+
+### 18. Championship Teams — Campeonato de Construtores *(beta)*
+**URL:** `https://api.openf1.org/v1/championship_teams`
+
+Pontuação das equipes no campeonato. Disponível apenas para sessões de corrida.
+
+| Campo | Descrição |
+|-------|-----------|
+| `team_name` | Nome da equipe |
+| `points` | Pontos acumulados |
+| `position` | Posição no campeonato |
+
+---
+
+## Referência: Status do DRS
+
+| Valor | Status |
+|-------|--------|
+| 0, 1 | Desligado |
+| 8 | Detectado / elegível na zona |
+| 10, 12, 14 | Ligado |
+| 2, 3, 9 | Desconhecido |
+
+---
+
+## Referência: Cores dos Mini-Setores (Segments)
+
+| Valor | Cor | Significado |
+|-------|-----|-------------|
+| 2048 | Amarelo | Setor normal |
+| 2049 | Verde | Melhor setor pessoal |
+| 2051 | Roxo | Melhor setor geral (fastest) |
+
+---
+
+## Exportação CSV
+
+Adicione `csv=true` a qualquer endpoint para receber os dados em CSV:
+
+```
+GET /v1/laps?session_key=latest&csv=true
+```

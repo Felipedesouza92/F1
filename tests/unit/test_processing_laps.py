@@ -23,8 +23,18 @@ def test_filter_valid_laps():
 
 def test_compute_top_n_laps():
     drivers = [
-        Driver(driver_number=1, full_name="Max Verstappen", team_name="Red Bull", team_colour="3671C6"),
-        Driver(driver_number=44, full_name="Lewis Hamilton", team_name="Mercedes", team_colour="6CD3BF"),
+        Driver(
+            driver_number=1,
+            full_name="Max Verstappen",
+            team_name="Red Bull",
+            team_colour="3671C6",
+        ),
+        Driver(
+            driver_number=44,
+            full_name="Lewis Hamilton",
+            team_name="Mercedes",
+            team_colour="6CD3BF",
+        ),
     ]
     index = build_driver_index(drivers)
 
@@ -48,11 +58,12 @@ def test_lap_time_series_removes_outliers():
         Lap(driver_number=1, lap_number=1, lap_duration=80.0),
         Lap(driver_number=1, lap_number=2, lap_duration=81.0),
         Lap(driver_number=1, lap_number=3, lap_duration=80.5),
-        Lap(driver_number=1, lap_number=4, lap_duration=120.0),  # Outlier (Safety car / Pit in)
+        Lap(
+            driver_number=1, lap_number=4, lap_duration=120.0
+        ),  # Outlier (Safety car / Pit in)
     ]
     series = lap_time_series(laps, [1])
     assert 1 in series
     lap_numbers = [p[0] for p in series[1]]
     assert 4 not in lap_numbers
     assert len(lap_numbers) == 3
-

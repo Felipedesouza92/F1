@@ -35,7 +35,8 @@ def compute_top_n_laps(
     best_per_driver: dict[int, Lap] = {}
 
     for lap in valid:
-        assert lap.lap_duration is not None
+        if lap.lap_duration is None:
+            continue
         num = lap.driver_number
         if num not in best_per_driver:
             best_per_driver[num] = lap
@@ -46,14 +47,19 @@ def compute_top_n_laps(
 
     sorted_laps = sorted(
         best_per_driver.values(),
-        key=lambda l: l.lap_duration if l.lap_duration is not None else float("inf"),
+        key=lambda item: (
+            item.lap_duration if item.lap_duration is not None else float("inf")
+        ),
     )[:n]
 
     results: list[FastestLapEntry] = []
     for lap in sorted_laps:
-        assert lap.lap_duration is not None
+        if lap.lap_duration is None:
+            continue
         driver = driver_index.get(lap.driver_number)
-        name = driver.full_name if driver and driver.full_name else f"#{lap.driver_number}"
+        name = (
+            driver.full_name if driver and driver.full_name else f"#{lap.driver_number}"
+        )
         team = driver.team_name if driver and driver.team_name else "Independente"
         color = driver.team_colour if driver and driver.team_colour else "FFFFFF"
         if not color.startswith("#"):
@@ -92,7 +98,9 @@ def lap_time_series(
             series[num] = []
             continue
 
-        durations = [l.lap_duration for l in driver_laps if l.lap_duration is not None]
+        durations = [
+            item.lap_duration for item in driver_laps if item.lap_duration is not None
+        ]
         if not durations:
             series[num] = []
             continue
@@ -101,11 +109,10 @@ def lap_time_series(
         cutoff = med * 1.07
 
         filtered = [
-            (l.lap_number, l.lap_duration)
-            for l in driver_laps
-            if l.lap_duration is not None and l.lap_duration <= cutoff
+            (item.lap_number, item.lap_duration)
+            for item in driver_laps
+            if item.lap_duration is not None and item.lap_duration <= cutoff
         ]
         series[num] = sorted(filtered, key=lambda x: x[0])
 
     return series
-

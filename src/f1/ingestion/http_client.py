@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import time
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 import httpx
 
@@ -34,7 +35,9 @@ class HttpClient:
         self.sleep = sleep_fn
         self.transport = transport
 
-    def get(self, endpoint: str, params: dict[str, Any] | None = None) -> list[dict[str, Any]]:
+    def get(
+        self, endpoint: str, params: dict[str, Any] | None = None
+    ) -> list[dict[str, Any]]:
         """Executa uma requisição GET retornando JSON com retries em 429/5xx/timeout."""
         url = f"{self.base_url}/{endpoint.lstrip('/')}"
         clean_params = {k: v for k, v in (params or {}).items() if v is not None}
@@ -45,7 +48,9 @@ class HttpClient:
                 with httpx.Client(
                     timeout=self.timeout, transport=self.transport
                 ) as client:
-                    logger.debug("GET %s (tentativa %d/%d)", url, attempt, self.max_retries)
+                    logger.debug(
+                        "GET %s (tentativa %d/%d)", url, attempt, self.max_retries
+                    )
                     resp = client.get(url, params=clean_params)
 
                     if resp.status_code == 429 or resp.status_code >= 500:
@@ -78,9 +83,14 @@ class HttpClient:
                     self.sleep(0.5 * (2 ** (attempt - 1)))
                     continue
             except httpx.HTTPStatusError as exc:
-                raise OpenF1ApiError(f"HTTP erro {exc.response.status_code} ao acessar {url}") from exc
+                raise OpenF1ApiError(
+                    f"HTTP erro {exc.response.status_code} ao acessar {url}"
+                ) from exc
             except Exception as exc:
-                raise OpenF1ApiError(f"Erro inesperado ao acessar {url}: {exc}") from exc
+                raise OpenF1ApiError(
+                    f"Erro inesperado ao acessar {url}: {exc}"
+                ) from exc
 
-        raise OpenF1ApiError(f"Falha após {self.max_retries} tentativas em {url}") from last_exc
-
+        raise OpenF1ApiError(
+            f"Falha após {self.max_retries} tentativas em {url}"
+        ) from last_exc

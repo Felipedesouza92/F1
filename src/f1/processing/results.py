@@ -31,4 +31,3 @@ def build_classification(
             )
         )
     return entries
-

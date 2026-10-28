@@ -28,4 +28,3 @@ def test_load_settings(monkeypatch):
     assert settings.environment == "staging"
     assert settings.log_level == "DEBUG"
     assert settings.cache_ttl_seconds == 86400
-

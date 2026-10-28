@@ -35,4 +35,3 @@ def load_settings() -> Settings:
         environment=os.environ.get("ENVIRONMENT", "development"),
         log_level=os.environ.get("LOG_LEVEL", "INFO"),
     )
-

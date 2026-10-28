@@ -24,4 +24,3 @@ def format_team_color(color_hex: str | None, default: str = "#E10600") -> str:
     if not color_hex:
         return default
     return color_hex if color_hex.startswith("#") else f"#{color_hex}"
-

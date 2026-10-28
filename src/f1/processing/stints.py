@@ -19,7 +19,9 @@ def build_stint_timeline(
         if s.lap_start is None or s.lap_end is None:
             continue
         driver = driver_index.get(s.driver_number)
-        name = driver.full_name if driver and driver.full_name else f"#{s.driver_number}"
+        name = (
+            driver.full_name if driver and driver.full_name else f"#{s.driver_number}"
+        )
         compound = (s.compound or "UNKNOWN").upper()
 
         timeline.append(
@@ -43,7 +45,9 @@ def pit_summary(
     summary: list[PitSummary] = []
     for p in pits:
         driver = driver_index.get(p.driver_number)
-        name = driver.full_name if driver and driver.full_name else f"#{p.driver_number}"
+        name = (
+            driver.full_name if driver and driver.full_name else f"#{p.driver_number}"
+        )
         summary.append(
             PitSummary(
                 driver_number=p.driver_number,
@@ -53,4 +57,3 @@ def pit_summary(
             )
         )
     return sorted(summary, key=lambda x: (x.lap_number or 0, x.driver_name))
-

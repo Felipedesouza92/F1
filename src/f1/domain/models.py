@@ -184,4 +184,3 @@ class SessionOverview(BaseModel):
     stint_timeline: list[StintBar] = []
     pit_stops: list[PitSummary] = []
     weather: WeatherSummary | None = None
-

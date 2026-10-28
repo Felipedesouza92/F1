@@ -15,4 +15,3 @@ def test_format_team_color():
     assert format_team_color("E10600") == "#E10600"
     assert format_team_color("#E10600") == "#E10600"
     assert format_team_color(None) == "#E10600"
-

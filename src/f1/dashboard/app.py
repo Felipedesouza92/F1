@@ -7,7 +7,7 @@ import streamlit as st
 from f1.dashboard.charts import fastest_laps_bar, pace_lines, stint_timeline
 from f1.dashboard.components import render_podium, render_weather_metrics
 from f1.domain.services import F1DashboardService
-from f1.ingestion.http_client import HttpClient
+from f1.ingestion.http_client import HttpClient, OpenF1ApiError
 from f1.ingestion.openf1_repositories import (
     OpenF1DriverRepository,
     OpenF1LapRepository,
@@ -58,7 +58,7 @@ def main() -> None:
 
     try:
         meetings = service.list_meetings(year)
-    except Exception as e:
+    except OpenF1ApiError as e:
         logger.error("Erro ao listar GPs: %s", e)
         st.error(f"Não foi possível conectar à OpenF1 API: {e}")
         return
@@ -67,8 +67,12 @@ def main() -> None:
         st.warning(f"Nenhum GP encontrado para o ano {year}.")
         return
 
-    meeting_map = {f"{m.meeting_name} ({m.circuit_short_name or ''})": m for m in meetings}
-    selected_meeting_name = st.sidebar.selectbox("Grande Prêmio", list(meeting_map.keys()))
+    meeting_map = {
+        f"{m.meeting_name} ({m.circuit_short_name or ''})": m for m in meetings
+    }
+    selected_meeting_name = st.sidebar.selectbox(
+        "Grande Prêmio", list(meeting_map.keys())
+    )
     selected_meeting = meeting_map[selected_meeting_name]
 
     sessions = service.list_sessions(selected_meeting.meeting_key)
@@ -81,16 +85,20 @@ def main() -> None:
     selected_session = session_map[selected_session_name]
 
     st.sidebar.markdown("---")
-    st.sidebar.caption("Dados fornecidos gratuitamente por [OpenF1](https://openf1.org).")
+    st.sidebar.caption(
+        "Dados fornecidos gratuitamente por [OpenF1](https://openf1.org)."
+    )
 
     # Cabeçalho Principal
     st.title(f"🏁 {selected_meeting.meeting_name} — {selected_session.session_name}")
-    st.caption(f"Circuito: {selected_meeting.circuit_short_name} | Ano: {selected_meeting.year}")
+    st.caption(
+        f"Circuito: {selected_meeting.circuit_short_name} | Ano: {selected_meeting.year}"
+    )
 
     with st.spinner("Carregando telemetria e dados da sessão..."):
         try:
             overview = service.get_session_overview(selected_session.session_key)
-        except Exception as e:
+        except OpenF1ApiError as e:
             logger.error("Erro ao carregar sessão: %s", e)
             st.error(f"Erro ao processar dados da sessão: {e}")
             return
@@ -100,7 +108,12 @@ def main() -> None:
     st.markdown("---")
 
     tab_res, tab_laps, tab_pace, tab_stints = st.tabs(
-        ["🏆 Resultado", "⚡ Melhores Voltas", "📈 Ritmo de Corrida", "🛞 Estratégia de Pneus"]
+        [
+            "🏆 Resultado",
+            "⚡ Melhores Voltas",
+            "📈 Ritmo de Corrida",
+            "🛞 Estratégia de Pneus",
+        ]
     )
 
     with tab_res:
@@ -122,7 +135,9 @@ def main() -> None:
             st.info("Nenhum dado de classificação disponível para esta sessão.")
 
     with tab_laps:
-        st.plotly_chart(fastest_laps_bar(overview.fastest_laps), use_container_width=True)
+        st.plotly_chart(
+            fastest_laps_bar(overview.fastest_laps), use_container_width=True
+        )
         if overview.fastest_laps:
             laps_table = [
                 {
@@ -140,7 +155,10 @@ def main() -> None:
 
     with tab_pace:
         if overview.drivers:
-            driver_choices = {f"{d.full_name} (#{d.driver_number})": d.driver_number for d in overview.drivers}
+            driver_choices = {
+                f"{d.full_name} (#{d.driver_number})": d.driver_number
+                for d in overview.drivers
+            }
             default_selection = list(driver_choices.keys())[:3]
             selected_names = st.multiselect(
                 "Selecione pilotos para comparar ritmo:",
@@ -152,15 +170,25 @@ def main() -> None:
             raw_laps = service._laps.list(selected_session.session_key)
             series = lap_time_series(raw_laps, selected_numbers)
 
-            names_map = {d.driver_number: d.full_name or f"#{d.driver_number}" for d in overview.drivers}
-            colors_map = {d.driver_number: f"#{d.team_colour or 'FFFFFF'}" for d in overview.drivers}
+            names_map = {
+                d.driver_number: d.full_name or f"#{d.driver_number}"
+                for d in overview.drivers
+            }
+            colors_map = {
+                d.driver_number: f"#{d.team_colour or 'FFFFFF'}"
+                for d in overview.drivers
+            }
 
-            st.plotly_chart(pace_lines(series, names_map, colors_map), use_container_width=True)
+            st.plotly_chart(
+                pace_lines(series, names_map, colors_map), use_container_width=True
+            )
         else:
             st.info("Sem dados de telemetria disponíveis.")
 
     with tab_stints:
-        st.plotly_chart(stint_timeline(overview.stint_timeline), use_container_width=True)
+        st.plotly_chart(
+            stint_timeline(overview.stint_timeline), use_container_width=True
+        )
         if overview.pit_stops:
             st.subheader("Paradas nos Boxes (Pit Stops)")
             pit_table = [
@@ -168,7 +196,9 @@ def main() -> None:
                     "Piloto": p.driver_name,
                     "Nº": p.driver_number,
                     "Volta": p.lap_number,
-                    "Duração (s)": f"{p.pit_duration:.2f}s" if p.pit_duration else "N/A",
+                    "Duração (s)": f"{p.pit_duration:.2f}s"
+                    if p.pit_duration
+                    else "N/A",
                 }
                 for p in overview.pit_stops
             ]
@@ -177,4 +207,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

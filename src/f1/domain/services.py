@@ -84,4 +84,3 @@ class F1DashboardService:
             pit_stops=pit_stops,
             weather=weather_sum,
         )
-

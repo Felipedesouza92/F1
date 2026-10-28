@@ -16,4 +16,3 @@ def test_configurar_logging():
     root_logger = logging.getLogger()
     assert root_logger.level == logging.DEBUG
     assert len(root_logger.handlers) >= 1
-
